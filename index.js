@@ -10,6 +10,15 @@
 
 export default {
   async fetch(request, env, ctx) {
-    return new Response('Hello World!')
+    const url = new URL(request.url)
+    url.hostname = 'i.pximg.net'
+    url.port = '80'
+    const upstreamRequest = new Request(url, request)
+    return fetch(upstreamRequest, {
+      headers: {
+        'Referer': 'https://www.pixiv.net/',
+        'User-Agent': 'Cloudflare Workers'
+      },
+    })
   },
 }
