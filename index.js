@@ -10,15 +10,27 @@
 
 export default {
   async fetch(request, env, ctx) {
+    const cache = caches.default
+
     const url = new URL(request.url)
     url.hostname = 'i.pximg.net'
     url.port = '80'
-    const upstreamRequest = new Request(url, request)
-    return fetch(upstreamRequest, {
+    const upstreamRequest = new Request(url, {
+      method: 'GET',
       headers: {
         'Referer': 'https://www.pixiv.net/',
         'User-Agent': 'Cloudflare Workers'
       },
     })
+
+    let cachedResponse = await cache.match(upstreamRequest)
+
+    if (!cachedResponse) {
+      const res = await fetch(upstreamRequest)
+      cachedResponse = new Response(res.body, res)
+      await cache.put(upstreamRequest, cachedResponse.clone())
+    }
+
+    return cachedResponse
   },
 }
